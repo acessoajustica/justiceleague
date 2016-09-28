@@ -4,9 +4,8 @@ db:
     - "5432"
 web:
   build: .
-  volumes:
-    - .:/acessoajustica
   ports:
     - "3000:3000"
   links:
     - db
+  command: bundle exec rails server -p 3000 -b '0.0.0.0'
