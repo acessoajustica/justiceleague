@@ -43,10 +43,12 @@ finally, run:
 
 ```
 git clone https://github.com/acessoajustica/acessoajustica.git
-./script/alfredo build
+./script/alfredo all
 ```
 
-If docker fails to download the images, or the ruby bundler
+This will build the containers, create and seed the database, run the migration and then starts the server
+
+If docker fails to download images or the ruby bundler
 fail due to problems in the internet connection, you'll have
 to restart the docker daemon. Run:
 
@@ -60,39 +62,44 @@ Or:
 sudo systemctl restart docker.service
 ```
 
-Finally, run:
-
-```
-./script/alfredo run
-```
-
 ## The alfredo script
 
 The ```alfredo``` script provides the following functionalities:
 
 ```
-# Builds the image from scratch, creates a new Gemfile.lock, runs all tests.
+# Builds images and containers.
 ./script/alfredo build
 
-#  Runs bundle update, does not remove containers or Gemfile.lock, runs all tests and migrations.
+# Runs bundle update.
 ./script/alfredo update
 
 # Stops and removes all containers.
 ./script/alfredo clean
 
-# Restarts the app container if its running, starts it otherwise.
-./script/alfredo restart
-
-# Runs migrations and starts the app container.
+# Runs the app on the latest container
 ./script/alfredo run
 
 # Runs the migrations.
 ./script/alfredo migrate
 
-# Runs unit and acceptance tests.
-./script/alfredo test
+# Runs unit tests.
+./script/alfredo rspec
+
+# Runs acceptance tests.
+./script/alfredo cucumber
 ```
+
+Before run any test, set the test enviroment up
+To set up test enviroment, run:
+
+```
+RAILS_ENV=TEST ./script/alfredo create
+RAILS_ENV=TEST ./script/alfredo seed
+RAILS_ENV=TEST ./script/alfredo migrate
+```
+
 For more information, run the help option:
+
 ```
 ./script/alfredo help
 ```
