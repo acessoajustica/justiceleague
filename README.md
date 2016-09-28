@@ -90,7 +90,7 @@ The ```alfredo``` script provides the following functionalities:
 ```
 
 Before run any test, set the test enviroment up
-To set up test enviroment, run:
+to set up test enviroment, run:
 
 ```
 RAILS_ENV=TEST ./script/alfredo create
