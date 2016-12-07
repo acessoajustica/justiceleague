@@ -25,5 +25,5 @@ end
 private
 
   def moradia_type_params
-    params.require(:moradia_type).permit(:description)
+    params.require(:moradia_type).permit(:description, :updated_at, :created_at)
   end
