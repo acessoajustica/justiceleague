@@ -1,0 +1,12 @@
+<% @atualizacao[:casos].each do |caso| %>
+	Caso <%= caso[:id] %> - <%= caso[:nome_cliente] %>
+	<% caso[:processos_update].each do |processo_update| %>
+		Processo número: <%= processo_update[:processo_numero] %>
+		Diário oficial: <%= processo_update[:diario_oficial] %>
+		Seção: <%= processo_update[:caderno] %>
+		Seção: <%= processo_update[:secao] %>
+		Seção: <%= processo_update[:pagina] %>
+		Atualização: 
+		<%= processo_update[:atualizacao] %>
+	<% end %>
+<% end %>

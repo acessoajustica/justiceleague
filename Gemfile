@@ -59,7 +59,6 @@ gem 'web-console', '~> 2.0', group: :development
 gem 'quiet_assets', group: :development
 
 group :development, :test do
-
   # Create test coverage with codeclimate
   gem "codeclimate-test-reporter", group: :test, require: nil
 
@@ -88,9 +87,8 @@ group :development, :test do
   gem 'shoulda-matchers', '~> 2.8.0'
 
   gem 'database_cleaner'
-
-
 end
+
 group :users, :authentication do
   gem 'devise', '~> 3.5.6'
 end

@@ -1,0 +1,19 @@
+<% @atualizacao[:casos].each do |caso| %>
+  <div>
+    <label>Caso <a href="localhost:3000/atendimentos/1"><%= caso[:id] %></a></label> - <%= caso[:nome_cliente] %>
+    <% caso[:processos_update].each do |processo_update| %>
+      <div style="margin-left: 50px">
+        <p>Processo número: <%= processo_update[:processo_numero] %></p>
+        <div style="margin-left: 50px">
+          <p>Diário oficial: <%= processo_update[:diario_oficial] %></p>
+          <p>Seção: <%= processo_update[:caderno] %></p>
+          <p>Seção: <%= processo_update[:secao] %></p>
+          <p>Seção: <%= processo_update[:pagina] %></p>
+          <label>Atualização: </label>
+          <p><%= processo_update[:atualizacao] %></p>
+        </div>
+      </div>
+    <% end %>
+  </div>
+  <hr>
+<% end %>

@@ -1,0 +1,127 @@
+#! /bin/bash
+#
+# Builds the Docker image using Docker-Compose,
+# Wraps running bundler and rspec tests,
+# Starts and Restarts the app;
+# (requires docker, docker-compose and sudo privileges)
+#
+
+DOCKER='docker'
+DOCKER_COMPOSE='docker-compose'
+GEMS='Gemfile'
+
+function usage {
+    echo "usage: ./scripts/init.sh [OPTIONS]:"
+    echo " "
+    echo " build:      Builds everything, images and containers."
+    echo " run:        Runs the app on the latest container."
+    echo " db:         Enters the database Container."
+    echo " db:reset:   Resets the database."
+    echo " rspec:      Runs unit tests."
+    echo " cucumber:   Runs acceptance tests."
+    echo " test:       Runs all tests."
+    echo " clean:      Stops and Removes all containers."
+    echo " purge:      Stops and Removes all containers and images."
+    echo " update:     Runs bundle update."
+    echo " migrate:    Runs all migrations. (also done by 'run' and 'all')"
+    echo " restart:    Stops all containers and then 'run'."
+    echo " seed:       Puts initial values on the database."
+    echo " help:       Prints this message."
+    echo " "
+}
+function check_deps {
+    # Check dependencies.
+    command -v ${DOCKER}>/dev/null 2>&1 || { echo >&2 "I require '${DOCKER}', but it's not installed.  Aborting."; exit 1; }
+    command -v ${DOCKER_COMPOSE}>/dev/null 2>&1 || { echo >&2 "I require '${DOCKER_COMPOSE}', but it's not installed.  Aborting."; exit 1; }
+    return 0
+}
+function app_seed {
+    sudo ${DOCKER_COMPOSE} run web rake db:seed                 # Seeds the database.
+    sudo ${DOCKER_COMPOSE} run web rake db:seed RAILS_ENV=test  # Seeds the test database.
+}
+function app_restart {
+    sudo ${DOCKER} stop $(sudo ${DOCKER} ps -a -q)              # Stops old containers.
+    sudo ${DOCKER_COMPOSE} up                                   # Starts the app.
+}
+function app_migrate {
+    sudo ${DOCKER_COMPOSE} run web rake db:create               # Creates all databases.
+    sudo ${DOCKER_COMPOSE} run web rake db:migrate              # Runs migrations.
+}
+function app_cucumber {
+    app_migrate
+    sudo ${DOCKER_COMPOSE} run web ./script/cucumber            # Runs acceptance tests.
+}
+function app_rspec {
+    app_migrate
+    sudo ${DOCKER_COMPOSE} run web rake spec                    # Runs rspec tests.
+}
+function app_test {
+    app_migrate
+    sudo ${DOCKER_COMPOSE} run web rake spec                    # Runs unity tests.
+    sudo ${DOCKER_COMPOSE} run web ./script/cucumber            # Runs acceptance tests.
+}
+function app_db {
+    sudo ${DOCKER_COMPOSE} run db psql -U postgres -h db
+}
+function app_db_reset {
+    sudo ${DOCKER_COMPOSE} run web rake db:reset
+}
+function app_run {
+    app_migrate
+    if [[ -f ./tmp/pid/server.pid ]]
+    then
+        sudo rm ./tmp/pid/server.pid
+    fi
+    sudo ${DOCKER_COMPOSE} up                                   # Starts the app.
+}
+function build_update {
+    sudo ${DOCKER_COMPOSE} run web bundle update                # Updating gems.
+    app_test
+}
+function build_clean {
+    CONTAINERS=$(sudo ${DOCKER} ps -a -q)
+    if [[ -n $CONTAINERS ]] 
+    then
+        sudo ${DOCKER} stop $CONTAINERS # Stops old containers.
+        sudo ${DOCKER} rm $CONTAINERS   # Remove old containers.
+    fi
+    if [[ -f ./tmp/pid/server.pid ]]
+    then
+        sudo rm ./tmp/pid/server.pid
+    fi
+}
+function build_purge {
+    build_clean
+    PROJECT_DIR=${PWD##*/}                         # Gets current dir name.
+    if [[ -f ${GEMS}.lock ]]
+    then
+        rm ${GEMS}.lock                                # Purges the lock.
+    fi
+    sudo ${DOCKER} rmi ${PROJECT_DIR}_web:latest   # Removes old project image.
+}
+function build {
+    build_purge
+
+    sudo ${DOCKER_COMPOSE} build                   # Builds a new image.
+    sudo ${DOCKER_COMPOSE} run web rake db:seed    # Adds admin user.
+    app_test
+}
+
+if check_deps; then
+    if [[ $1 == build ]]; then build;
+    elif [[ $1 == purge ]]; then build_purge;
+    elif [[ $1 == update ]]; then build_update;
+    elif [[ $1 == clean ]]; then build_clean;
+    elif [[ $1 == restart ]]; then app_restart;
+    elif [[ $1 == run ]]; then app_run;
+    elif [[ $1 == db ]]; then app_db;
+    elif [[ $1 == db:reset ]]; then app_db_reset;
+    elif [[ $1 == migrate ]]; then app_migrate;
+    elif [[ $1 == cucumber ]]; then app_cucumber;
+    elif [[ $1 == rspec ]]; then app_rspec;
+    elif [[ $1 == test ]]; then app_test;
+    elif [[ $1 == seed ]]; then app_seed;
+    elif [[ $1 == help ]]; then usage;
+    else { echo ""; echo "Error: no valid argument."; echo ""; usage; echo "Exiting..."; exit 0; }
+    fi
+fi
